@@ -38,11 +38,13 @@ class Track:
         self.filename = f"{name}.wav"
         self.is_recording = False
         self.is_playing = False
+        self.is_monitoring = False
         self.muted = False
         self.solo = False
         self.volume = 1.0
         self.sound = None
         self.thread = None
+        self.monitor_thread = None
 
     def start_recording(self):
         if self.is_recording:
@@ -90,6 +92,42 @@ class Track:
         # Load for playback
         self.sound = pygame.mixer.Sound(self.filename)
 
+    def start_monitoring(self):
+        if self.is_monitoring:
+            return
+        self.is_monitoring = True
+        self.monitor_thread = threading.Thread(target=self._monitor)
+        self.monitor_thread.start()
+
+    def stop_monitoring(self):
+        self.is_monitoring = False
+        if self.monitor_thread:
+            self.monitor_thread.join()
+
+    def _monitor(self):
+        CHUNK = 1024
+        FORMAT = pyaudio.paInt16
+        CHANNELS = 1
+        RATE = 44100
+
+        p = pyaudio.PyAudio()
+        stream = p.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        output=True,  # For monitoring
+                        input_device_index=self.device_index,
+                        output_device_index=p.get_default_output_device_info()['index'],
+                        frames_per_buffer=CHUNK)
+
+        while self.is_monitoring:
+            data = stream.read(CHUNK)
+            stream.write(data)
+
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
     def play(self):
         if self.sound and not self.is_playing:
             self.is_playing = True
@@ -120,17 +158,41 @@ class Track:
 class AudioRecorder:
     def __init__(self):
         self.tracks = []
-        self.detect_devices()
+        self.available_devices = self.get_available_devices()
+        self.select_tracks()
 
-    def detect_devices(self):
+    def get_available_devices(self):
+        devices = []
         p = pyaudio.PyAudio()
         info = p.get_host_api_info_by_index(0)
         numdevices = info.get('deviceCount')
         for i in range(numdevices):
             device_info = p.get_device_info_by_host_api_device_index(0, i)
-            if device_info.get('maxInputChannels') > 0 and 'USB' in device_info.get('name'):
-                self.tracks.append(Track(i, f"Track_{len(self.tracks)+1}"))
+            if device_info.get('maxInputChannels') > 0:
+                devices.append({
+                    'index': i,
+                    'name': device_info.get('name'),
+                    'channels': device_info.get('maxInputChannels')
+                })
         p.terminate()
+        return devices
+
+    def select_tracks(self):
+        # For Raspberry Pi USB ports, assume clockwise numbering:
+        # 1: top-left, 2: top-right, 3: bottom-right, 4: bottom-left
+        usb_devices = [d for d in self.available_devices if 'USB' in d['name']]
+        
+        # Map to physical ports (this may need adjustment based on actual hardware)
+        port_mapping = {
+            0: "Port 1 (Top-Left)",
+            1: "Port 2 (Top-Right)", 
+            2: "Port 3 (Bottom-Right)",
+            3: "Port 4 (Bottom-Left)"
+        }
+        
+        for i, device in enumerate(usb_devices[:4]):  # Limit to 4 tracks
+            port_name = port_mapping.get(i, f"Port {i+1}")
+            self.tracks.append(Track(device['index'], f"Track_{i+1}_{port_name}"))
 
     def start_all_recording(self):
         for track in self.tracks:
@@ -153,6 +215,7 @@ class GUI:
 
             tk.Label(frame, text=track.name).pack(side=tk.LEFT)
 
+            tk.Button(frame, text="Monitor", command=lambda t=track: self.toggle_monitor(t)).pack(side=tk.LEFT)
             tk.Button(frame, text="Play", command=lambda t=track: t.play()).pack(side=tk.LEFT)
             tk.Button(frame, text="Stop", command=lambda t=track: t.stop()).pack(side=tk.LEFT)
             tk.Button(frame, text="Mute", command=lambda t=track: t.mute()).pack(side=tk.LEFT)
@@ -168,6 +231,12 @@ class GUI:
         tk.Button(self.root, text="Stop Recording", command=self.recorder.stop_all_recording).pack()
         tk.Button(self.root, text="Play All", command=self.play_all).pack()
         tk.Button(self.root, text="Export", command=self.export).pack()
+
+    def toggle_monitor(self, track):
+        if track.is_monitoring:
+            track.stop_monitoring()
+        else:
+            track.start_monitoring()
 
     def play_all(self):
         for track in self.recorder.tracks:

@@ -4,12 +4,27 @@ A user-friendly program for Raspberry Pi that records audio from multiple USB po
 
 ## Features
 
-- Simultaneous recording from USB audio devices
+- Simultaneous recording from up to 4 USB audio devices (automatically mapped to physical ports)
 - WAV file recording
-- GUI dashboard with play, stop, mute, solo, volume controls
+- GUI dashboard with controls for each track:
+  - **Monitor**: Real-time audio monitoring of input
+  - **Play/Stop**: Playback of recorded tracks
+  - **Mute/Solo**: Audio controls
+  - **Volume**: Adjustable playback volume
 - Playback of individual tracks or all together
 - Export functionality
-- E-ink display for track status
+- E-ink display for track status (optional)
+
+## USB Port Mapping
+
+The program automatically detects USB audio devices and maps them to tracks numbered clockwise from the top-left USB port:
+
+- Track 1: Top-Left USB port
+- Track 2: Top-Right USB port  
+- Track 3: Bottom-Right USB port
+- Track 4: Bottom-Left USB port
+
+Only USB devices with input capabilities are used.
 
 ## Requirements
 
