@@ -59,17 +59,42 @@ Only USB devices with input capabilities are used.
    ```
    Note: If waveshare-epd is not installed, the program will run without e-ink display functionality.
 
-4. Ensure USB audio devices are connected and recognized.
+5. Ensure USB audio devices are connected and recognized.
 
-5. Run the program:
+6. Run the program:
    ```
    python main.py
    ```
 
 Note: Always activate the virtual environment (`source venv/bin/activate`) before running the program.
-   python main.py
+
+## Auto-start on Boot
+
+To start the GUI automatically after boot on Raspberry Pi desktop:
+
+1. Copy the `.desktop` file into the autostart folder:
+   ```bash
+   mkdir -p ~/.config/autostart
+   cp 4-track-backup.desktop ~/.config/autostart/
    ```
 
+2. Make sure `run.sh` is executable:
+   ```bash
+   chmod +x ./run.sh
+   ```
+
+3. Update the `Exec=` line in `4-track-backup.desktop` if your repository is not in `/home/pi/4-Track-Backup`.
+   For example, if the project lives in `/home/weatherbelle/4-Track-Backup`, use:
+   ```ini
+   Exec=/usr/bin/env bash /home/weatherbelle/4-Track-Backup/run.sh
+   ```
+
+4. Reboot the Pi:
+   ```bash
+   sudo reboot
+   ```
+
+The program should open automatically when the Raspberry Pi desktop session starts.
 ## Usage
 
 - Launch the program to open the GUI dashboard.

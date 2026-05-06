@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=4-Track Backup
+Comment=Start 4-Track Backup on Raspberry Pi boot
+Exec=/usr/bin/env bash /home/pi/4-Track-Backup/run.sh
+Terminal=false
+X-GNOME-Autostart-enabled=true
