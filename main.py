@@ -6,20 +6,30 @@ import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import pygame
-from waveshare_epd import epd2in13_V2
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
+
+# Try to import e-ink library
+try:
+    from waveshare_epd import epd2in13_V2
+    EPD_AVAILABLE = True
+except ImportError:
+    EPD_AVAILABLE = False
+    print("Warning: waveshare-epd not available. E-ink display will be disabled.")
 
 # Initialize Pygame mixer
 pygame.mixer.init()
 
-# E-ink display
-epd = epd2in13_V2.EPD()
-epd.init(epd.FULL_UPDATE)
-epd.Clear(0xFF)
-
-# Font for e-ink
-font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 12)
+# E-ink display (only if available)
+if EPD_AVAILABLE:
+    epd = epd2in13_V2.EPD()
+    epd.init(epd.FULL_UPDATE)
+    epd.Clear(0xFF)
+    # Font for e-ink
+    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 12)
+else:
+    epd = None
+    font = None
 
 class Track:
     def __init__(self, device_index, name):
@@ -180,6 +190,8 @@ class EInkDisplay:
         self.recorder = recorder
 
     def update(self):
+        if not EPD_AVAILABLE or epd is None:
+            return
         image = Image.new('1', (epd.height, epd.width), 255)
         draw = ImageDraw.Draw(image)
         y = 0

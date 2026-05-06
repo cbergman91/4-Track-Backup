@@ -36,6 +36,14 @@ A user-friendly program for Raspberry Pi that records audio from multiple USB po
    pip install -r requirements.txt
    ```
 
+4. (Optional) Install Waveshare e-Paper library for e-ink display:
+   ```
+   git clone https://github.com/waveshare/e-Paper.git
+   cd e-Paper/RaspberryPi_JetsonNano/python
+   python setup.py install
+   ```
+   Note: If waveshare-epd is not installed, the program will run without e-ink display functionality.
+
 4. Ensure USB audio devices are connected and recognized.
 
 5. Run the program:

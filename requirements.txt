@@ -1,5 +1,4 @@
 pyaudio
 pygame
 numpy
-waveshare-epd
 pillow
